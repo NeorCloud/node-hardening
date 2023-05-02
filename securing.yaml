@@ -1,0 +1,109 @@
+# Security hardening for Ubuntu 22.04 LTS playbook
+- name: Upgrade depenencies
+  hosts: all
+  become: yes
+  vars:
+    ansible_user: ansible
+  tasks:
+  - name: Update apt cache
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+      
+  - name: Upgrade all packages
+    ansible.builtin.apt:
+      upgrade: yes
+      autoremove: yes
+      autoclean: yes
+
+- name: Add the ansible user
+  hosts: all
+  become: yes
+  tasks:
+  - name: Add the user 'ansible' with a bash shell
+    ansible.builtin.user:
+      name: ansible
+      shell: /bin/bash
+      create_home: yes
+      state: present
+      groups: wheel
+      append: yes
+
+  - name: Add ansible public key
+    authorized_key:
+      user: ansible
+      key: "{{ lookup('file', '/home/ansible/.ssh/id_ed25519.pub') }}"
+
+  - name: "Allow ansible user to sudo without a password"
+    lineinfile:
+      dest: "/etc/sudoers"
+      state: "present"
+      insertafter: "^#includedir /etc/sudoers.d"
+      line: "ansible  ALL=(ALL) NOPASSWD: ALL" 
+
+- name: Secure SSH access
+  hosts: all
+  become: yes
+  vars:
+    ansible_user: ansible
+  tasks:
+  - name: Allow public key authentication
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#PubkeyAuthentication yes"
+      line: "PubkeyAuthentication yes"
+      state: present
+
+  - name: Disallow password authentication
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication no"
+      state: present
+
+  - name: Allow ansible access only
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      line: "AllowUsers ansible@{{ ansible_ip }}"
+      state: present
+
+  - name: Disallow root SSH access
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^PermitRootLogin"
+      line: "PermitRootLogin no"
+      state: present
+
+  - name: Limit idle time to 2 mins
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#ClientAliveInterval 0"
+      line: "ClientAliveInterval 120"
+      state: present
+
+  - name: Do not permit empty passwords
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#PermitEmptyPasswords no"
+      line: "PermitEmptyPasswords no"
+      state: present
+
+  - name: Disable X11 forwarding
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^X11Forwarding yes"
+      line: "X11Forwarding yes"
+      state: present
+
+  - name: Limit max authentication attempts to 3
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "#MaxAuthTries 6"
+      line: "MaxAuthTries 3"
+      state: present
+    notify: Restart ssh
+
+  - name: Restart ssh
+    service:
+      name: sshd
+      state: restarted
