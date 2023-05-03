@@ -1,22 +1,12 @@
 # Security hardening for Ubuntu 22.04 LTS playbook
-- name: Upgrade depenencies
-  hosts: all
-  become: yes
-  tasks:
-  - name: Update apt cache
-    ansible.builtin.apt:
-      update_cache: yes
-      cache_valid_time: 3600
-      
-  - name: Upgrade all packages
-    ansible.builtin.apt:
-      upgrade: yes
-      autoremove: yes
-      autoclean: yes
-
 - name: Add the ansible user
   hosts: all
   become: yes
+  # Set sudo password from ansible-vault
+  vars_prompt:
+    - name: "ansible_become_pass"
+      prompt: "Enter sudo password"
+      private: yes
   tasks:
   - name: Add the user 'ansible' with a bash shell
     ansible.builtin.user:
@@ -38,6 +28,23 @@
       state: "present"
       insertafter: "^#includedir /etc/sudoers.d"
       line: "ansible  ALL=(ALL) NOPASSWD: ALL" 
+
+- name: Upgrade depenencies
+  hosts: all
+  become: yes
+  vars:
+    ansible_user: ansible
+  tasks:
+  - name: Update apt cache
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+      
+  - name: Upgrade all packages
+    ansible.builtin.apt:
+      upgrade: yes
+      autoremove: yes
+      autoclean: yes
 
 - name: Secure SSH access
   hosts: all
@@ -74,10 +81,10 @@
 
   - name: Disable SSH Protocol 1
     lineinfile:
-    dest: /etc/ssh/sshd_config
-    regexp: "^#Protocol"
-    line: "Protocol 2"
-    state: present
+      dest: /etc/ssh/sshd_config
+      regexp: "^#Protocol"
+      line: "Protocol 2"
+      state: present
 
   - name: Disable Port Forwarding
     lineinfile:
