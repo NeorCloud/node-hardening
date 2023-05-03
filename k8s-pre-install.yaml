@@ -15,4 +15,3 @@
       name: swap
       fstype: swap
       state: absent
-    when: ansible_swaptotal_mb > 0
