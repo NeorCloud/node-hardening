@@ -72,6 +72,41 @@
       line: "PermitRootLogin no"
       state: present
 
+  - name: Disable SSH Protocol 1
+    lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "^#Protocol"
+    line: "Protocol 2"
+    state: present
+
+  - name: Disable Port Forwarding
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#AllowTcpForwarding"
+      line: "AllowTcpForwarding no"
+      state: present
+
+  - name: Limit the Maximum Number of Concurrent Sessions
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#MaxSessions"
+      line: "MaxSessions 4"
+      state: present
+
+  - name: Change Log Level of SSH in Linux
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#LogLevel INFO"
+      line: "LogLevel VERBOSE"
+      state: present
+
+  - name: Change the Default Port
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "^#Port 22"
+      line: "Port 23389"
+      state: present
+
   - name: Limit idle time to 2 mins
     lineinfile:
       dest: /etc/ssh/sshd_config
