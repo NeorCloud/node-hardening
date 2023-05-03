@@ -53,6 +53,10 @@
   vars:
     ansible_user: ansible
     ansible_ssh_private_key_file: /root/.ansible/.ssh/id_ed25519
+  vars_prompt:
+    - name: "ansible_ip"
+      prompt: "Enter your IP address"
+      private: no
   tasks:
   - name: Allow public key authentication
     lineinfile:
