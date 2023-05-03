@@ -152,6 +152,6 @@
 
   handlers:
   - name: Restart ssh
-    service:
+    ansible.builtin.service:
       name: sshd
       state: restarted
