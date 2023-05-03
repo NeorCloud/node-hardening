@@ -1,0 +1,11 @@
+# Pre-installation k8s nodes playbook
+
+# Disable swap
+- name: Disable swap
+  shell: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+# Disable SELinux
+- name: Disable SELinux
+  shell: setenforce 0
+  when: ansible_selinux.status == 'enabled'
