@@ -14,7 +14,7 @@
       shell: /bin/bash
       create_home: yes
       state: present
-      groups: wheel
+      groups: sudo
       append: yes
 
   - name: Add ansible public key
