@@ -15,3 +15,12 @@
       name: swap
       fstype: swap
       state: absent
+
+- name: Set timezone to Asia/Tehran
+  hosts: all
+  become: yes
+  tasks:
+  - name: Set timezone to Asia/Tehran
+    timezone:
+      name: Asia/Tehran
+      state: present
