@@ -50,7 +50,7 @@
   vars:
     - argo_namespace: argocd
     - repository_urls: "https://github.com/NeorCloud/argo-cluster-bootstrapping,https://github.com/NeorCloud/kong-k8s"
-    - username: not-used
+    - username: oauth2
   vars_prompt:
     - name: "token"
       prompt: "Enter your GitHub token"
