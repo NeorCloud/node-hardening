@@ -31,6 +31,7 @@
 
 - name: Create topolvm namespace
   hosts: k8s-master1
+  become: true
   tasks:
     - name: Create topolvm namespace
       kubernetes.core.k8s:
@@ -45,6 +46,7 @@
 
 - name: Add Argo repository secrets
   hosts: k8s-master1
+  become: true
   vars:
     - argo_namespace: argocd
     - repository_urls: "https://github.com/NeorCloud/argo-cluster-bootstrapping,https://github.com/NeorCloud/kong-k8s"
@@ -80,6 +82,7 @@
 
 - name: Add bootstrapping application to Argo
   hosts: k8s-master1
+  become: true
   vars:
     - argo_namespace: argocd
     - app_name: bootstrapping
@@ -118,6 +121,7 @@
 
 - name: Set ingress to access Argo
   hosts: k8s-master1
+  become: true
   vars:
     - argo_namespace: argocd
     - ingress_host: argo.{{ domain }}
