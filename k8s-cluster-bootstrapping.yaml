@@ -12,6 +12,11 @@
         vg: topolvm
         pvs: "{{ topolvm_disks }}"
         state: present
+
+- name: Install pre-requisites for k8s ansible module
+  hosts: k8s-master1
+  become: true
+  tasks:
     - name: Install pip
       ansible.builtin.package:
         name: python3-pip
@@ -23,6 +28,10 @@
           - pyyaml
           - openshift
         state: present
+
+- name: Create topolvm namespace
+  hosts: k8s-master1
+  tasks:
     - name: Create topolvm namespace
       kubernetes.core.k8s:
         state: present
@@ -45,17 +54,6 @@
       prompt: "Enter your GitHub token"
       private: true
   tasks:
-    - name: Install pip
-      ansible.builtin.package:
-        name: python3-pip
-        state: present
-    - name: Install kubernetes task pre-requisites
-      ansible.builtin.pip:
-        name:
-          - kubernetes
-          - pyyaml
-          - openshift
-        state: present
     - name: Create argo namespace
       kubernetes.core.k8s:
         state: present
@@ -90,17 +88,6 @@
     - path: "."
     - revision: HEAD
   tasks:
-    - name: Install pip
-      ansible.builtin.package:
-        name: python3-pip
-        state: present
-    - name: Install kubernetes task pre-requisites
-      ansible.builtin.pip:
-        name:
-          - kubernetes
-          - pyyaml
-          - openshift
-        state: present
     - name: Create bootstrapping application
       kubernetes.core.k8s:
         state: present
