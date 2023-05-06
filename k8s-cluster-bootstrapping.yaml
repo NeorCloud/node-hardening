@@ -124,7 +124,7 @@
   become: true
   vars:
     - argo_namespace: argocd
-    - ingress_host: argo.{{ domain }}
+    - ingress_host: argocd.panter.local
   tasks:
     - name: Create ingress
       kubernetes.core.k8s:
