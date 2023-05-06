@@ -12,6 +12,10 @@
         vg: topolvm
         pvs: "{{ topolvm_disks }}"
         state: present
+    - name: Install pip
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
     - name: Install kubernetes task pre-requisites
       ansible.builtin.pip:
         name:
@@ -41,6 +45,10 @@
       prompt: "Enter your GitHub token"
       private: true
   tasks:
+    - name: Install pip
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
     - name: Install kubernetes task pre-requisites
       ansible.builtin.pip:
         name:
@@ -82,6 +90,10 @@
     - path: "."
     - revision: HEAD
   tasks:
+    - name: Install pip
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
     - name: Install kubernetes task pre-requisites
       ansible.builtin.pip:
         name:
