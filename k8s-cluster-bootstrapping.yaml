@@ -1,0 +1,132 @@
+- name: Prepare topolvm environment
+  hosts: kube_node
+  become: true
+  vars_prompt:
+    - name: "topolvm_disks"
+      prompt: "Enter disks for topolvm"
+      private: false
+      default: "/dev/sdb"
+  tasks:
+    - name: Create volume group
+      community.general.lvg:
+        vg: topolvm
+        pvs: "{{ topolvm_disks }}"
+        state: present
+    - name: Create topolvm namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: topolvm-system
+            labels:
+              "topolvm.io/webhook": ignore
+
+- name: Add Argo repository secrets
+  hosts: k8s-master1
+  vars:
+    - argo_namespace: argocd
+    - repository_urls: "https://github.com/NeorCloud/argo-cluster-bootstrapping,https://github.com/NeorCloud/kong-k8s"
+    - username: not-used
+  vars_prompt:
+    - name: "token"
+      prompt: "Enter your GitHub token"
+      private: true
+  tasks:
+    - name: Create argo namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ argo_namespace }}"
+    # Create a secret for each repository sepated by comma
+    - name: Create repository secrets
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ argo_namespace }}"
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ item.split('/')[-1] }}"
+          type: kubernetes.io/basic-auth
+          stringData:
+            username: "{{ username }}"
+            password: "{{ token }}"
+      loop: "{{ repository_urls.split(',') }}"
+
+- name: Add bootstrapping application to Argo
+  hosts: k8s-master1
+  vars:
+    - argo_namespace: argocd
+    - app_name: bootstrapping
+    - server: https://kubernetes.default.svc
+    - repository: https://github.com/NeorCloud/argo-cluster-bootstrapping
+    - path: "."
+    - revision: HEAD
+  tasks:
+    - name: Create bootstrapping application
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ argo_namespace }}"
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: "{{ app_name }}"
+          spec:
+            destination:
+              namespace: "{{ argo_namespace }}"
+              server: "{{ server }}"
+            project: default
+            source:
+              path: "{{ path }}"
+              repoURL: "{{ repository }}"
+              targetRevision: "{{ revision }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - Validate=false
+                - Prune=true
+                - SelfHeal=true
+
+- name: Set ingress to access Argo
+  hosts: k8s-master1
+  vars:
+    - argo_namespace: argocd
+    - ingress_host: argo.{{ domain }}
+  tasks:
+    - name: Create ingress
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ argo_namespace }}"
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: argo
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-kong-issuer
+          spec:
+            ingressClassName: kong
+          tls:
+            - hosts:
+                - "{{ ingress_host }}"
+              secretName: argo-tls
+          rules:
+            - host: "{{ ingress_host }}"
+              http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: argocd-server
+                        port:
+                          number: 443
