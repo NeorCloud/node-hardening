@@ -1,0 +1,33 @@
+---
+- name: Replace new proxy in containerd systemd config
+  hosts: all
+  become: true
+  vars_prompt:
+    - name: "proxy_server"
+      prompt: "Proxy server"
+      private: false
+    - name: "proxy_port"
+      prompt: "Proxy port"
+      private: false
+  tasks:
+    - name: Set http proxy in containerd systemd config
+      ansible.builtin.replace:
+        path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+        # Replace the "HTTP_PROXY=..." section from Environment
+        regexp: '"HTTP_PROXY=.*"'
+        replace: '"HTTP_PROXY=http://{{ proxy_server }}:{{ proxy_port }}"'
+        backup: true
+    - name: Set https proxy in containerd systemd config
+      ansible.builtin.replace:
+        path: /etc/systemd/system/containerd.service.d/https-proxy.conf
+        # Replace the "HTTPS_PROXY=..." section from Environment
+        regexp: '"HTTPS_PROXY=.*"'
+        replace: '"HTTPS_PROXY=http://{{ proxy_server }}:{{ proxy_port }}"'
+        backup: true
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+    - name: Restart containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
