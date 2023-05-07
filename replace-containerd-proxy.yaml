@@ -19,7 +19,7 @@
         backup: true
     - name: Set https proxy in containerd systemd config
       ansible.builtin.replace:
-        path: /etc/systemd/system/containerd.service.d/https-proxy.conf
+        path: /etc/systemd/system/containerd.service.d/http-proxy.conf
         # Replace the "HTTPS_PROXY=..." section from Environment
         regexp: '"HTTPS_PROXY=.*"'
         replace: '"HTTPS_PROXY=http://{{ proxy_server }}:{{ proxy_port }}"'
