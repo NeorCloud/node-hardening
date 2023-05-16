@@ -169,3 +169,27 @@
         url: https://github.com/argoproj/argo-cd/releases/download/v2.5.7/argocd-linux-amd64
         dest: /usr/local/bin/argocd
         mode: '0755'
+
+- name: Install OperatorLifeCycleManager
+  hosts: k8s-master1
+  become: true
+  tasks:
+    - name: Install Operator SDK
+      ansible.builtin.get_url:
+        url: https://github.com/operator-framework/operator-sdk/releases/download/v1.26.1/operator-sdk_linux_amd64
+        dest: /tmp/operator-sdk.tar.gz
+      register: download_result
+
+    - name: Extract Operator SDK
+      ansible.builtin.unarchive:
+        src: /tmp/operator-sdk.tar.gz
+        dest: /usr/local/bin
+        remote_src: yes
+        creates: /usr/local/bin/operator-sdk
+      when: download_result.changed
+    
+    - name: Install OLM
+      ansible.builtin.shell: |
+        operator-sdk olm install
+      args:
+        executable: /usr/local/bin/operator-sdk
