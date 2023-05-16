@@ -159,3 +159,13 @@
                           name: argocd-server
                           port:
                             number: 443
+
+- name: Install ArgoCD CLI
+  hosts: kube_control_plane
+  become: true
+  tasks:
+    - name: Install ArgoCD CLI
+      ansible.builtin.get_url:
+        url: https://github.com/argoproj/argo-cd/releases/download/v2.5.7/argocd-linux-amd64
+        dest: /usr/local/bin/argocd
+        mode: '0755'
