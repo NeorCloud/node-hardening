@@ -181,7 +181,6 @@
         mode: '0755'
     
     - name: Install OLM
+      # run `operator-sdk olm install`
       ansible.builtin.shell: |
-        operator-sdk olm install
-      args:
-        executable: /usr/local/bin/operator-sdk
+        operator-sdk olm install --version 0.24.0
