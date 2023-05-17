@@ -14,15 +14,15 @@
       ansible.builtin.replace:
         path: /etc/systemd/system/containerd.service.d/http-proxy.conf
         # Replace the "HTTP_PROXY=..." section from Environment
-        regexp: '"HTTP_PROXY=.*"'
-        replace: '"HTTP_PROXY=http://{{ proxy_server }}:{{ proxy_port }}"'
+        regexp: 'HTTP_PROXY=[a-zA-Z0-9\:\/\.]+'
+        replace: 'HTTP_PROXY=http://{{ proxy_server }}:{{ proxy_port }}'
         backup: true
     - name: Set https proxy in containerd systemd config
       ansible.builtin.replace:
         path: /etc/systemd/system/containerd.service.d/http-proxy.conf
         # Replace the "HTTPS_PROXY=..." section from Environment
-        regexp: '"HTTPS_PROXY=.*"'
-        replace: '"HTTPS_PROXY=http://{{ proxy_server }}:{{ proxy_port }}"'
+        regexp: 'HTTPS_PROXY=[a-zA-Z0-9\:\/\.]+'
+        replace: 'HTTPS_PROXY=http://{{ proxy_server }}:{{ proxy_port }}'
         backup: true
     - name: Reload systemd daemon
       ansible.builtin.systemd:
