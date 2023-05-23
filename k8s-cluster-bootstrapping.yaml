@@ -184,3 +184,5 @@
       # run `operator-sdk olm install`
       ansible.builtin.shell: |
         operator-sdk olm install --version 0.24.0
+      register: olm_install
+      failed_when: olm_install.rc != 0
