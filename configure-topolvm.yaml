@@ -1,0 +1,14 @@
+- name: Prepare topolvm environment
+  hosts: k8s_cluster
+  become: true
+  vars_prompt:
+    - name: "topolvm_disks"
+      prompt: "Enter disks for topolvm"
+      private: false
+      default: "/dev/sdb"
+  tasks:
+    - name: Create volume group
+      community.general.lvg:
+        vg: topolvm
+        pvs: "{{ topolvm_disks }}"
+        state: present
