@@ -71,7 +71,7 @@
   - name: Allow ansible access only
     lineinfile:
       dest: /etc/ssh/sshd_config
-      line: "AllowUsers ansible@{{ ansible_ip }}"
+      line: "AllowUsers ansible@{{ access_ip }}"
       state: present
 
   - name: Disallow root SSH access
