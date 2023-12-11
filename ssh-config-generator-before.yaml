@@ -1,8 +1,7 @@
 ---
 - name: Create .ssh/config file from YAML inventory
-  hosts: all
+  hosts: kube_lb
   vars:
-    inventory_file_path: /root/bama-dcd-stage/inventory/hosts.yaml
     ssh_config_dir: /root/.ssh
     ssh_config_path: "{{ ssh_config_dir }}/config"
     ssh_user: ansible
@@ -10,15 +9,6 @@
     ssh_identity_file: /root/.ansible/.ssh/id_ed25519
 
   tasks:
-    - name: Read inventory file
-      slurp:
-        src: "{{ inventory_file_path }}"
-      register: inventory_content
-
-    - name: Parse YAML inventory
-      set_fact:
-        inventory_data: "{{ inventory_content.content | b64decode | from_yaml }}"
-
     - name: Create .ssh directory if it doesn't exist
       file:
         path: "{{ ssh_config_dir }}"
@@ -28,10 +18,11 @@
     - name: Create .ssh/config file
       copy:
         content: |
-          {% for host, hostvars in inventory_data.all.hosts.items() %}
-          {% if 'ip' in hostvars %}
+          {% for host in groups['all'] %}
+          {% set hostvars = hostvars[host] %}
+          {% if 'ansible_host' in hostvars %}
           Host {{ host }}
-            HostName {{ hostvars.ip }}
+            HostName {{ hostvars.ansible_host }}
             User {{ ssh_user }}
             Port {{ ssh_port }}
             IdentityFile {{ ssh_identity_file }}
