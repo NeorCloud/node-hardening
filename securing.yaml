@@ -141,7 +141,7 @@
     lineinfile:
       dest: /etc/ssh/sshd_config
       regexp: "^#Port 22"
-      line: "Port 23389"
+      line: "Port {{ ssh_port_desired }}"
       state: present
 
   - name: Limit idle time to 60 mins
