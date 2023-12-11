@@ -1,9 +1,37 @@
+
+# create ansible-key
+- name: Generate ed25519 SSH key pair if directory and file do not exist
+  hosts: localhost
+  tasks:
+    - name: Extract SSH key directory
+      set_fact:
+        sshKeyDir: "{{ sshKeyPath | dirname }}"
+
+    - name: Check if SSH key directory exists
+      stat:
+        path: "{{ sshKeyDir }}"
+      register: ssh_key_dir
+
+    - name: Create SSH key directory
+      file:
+        path: "{{ sshKeyDir }}"
+        state: directory
+        mode: '0700'
+      when: not ssh_key_dir.stat.exists
+
+    - name: Check if SSH key file exists
+      stat:
+        path: "{{ sshKeyPath }}"
+      register: ssh_key_file
+
+    - name: Generate SSH key pair
+      command: ssh-keygen -t ed25519 -f "{{ sshKeyPath }}" -q -N ''
+      when: not ssh_key_file.stat.exists
+
 # Security hardening for Ubuntu 22.04 LTS playbook
 - name: Add the ansible user
   hosts: all
   become: yes
-  vars:
-    sshKeyPath: "/root/.ansible/.ssh/id_ed25519"
   # Set sudo password from ansible-vault
   vars_prompt:
     - name: "ansible_become_pass"
@@ -30,7 +58,6 @@
       state: "present"
       insertafter: "^#includedir /etc/sudoers.d"
       line: "ansible  ALL=(ALL) NOPASSWD: ALL" 
-
 - name: Upgrade depenencies
   hosts: all
   become: yes
@@ -48,7 +75,6 @@
       upgrade: yes
       autoremove: yes
       autoclean: yes
-
 - name: Secure SSH access
   hosts: all
   become: yes
