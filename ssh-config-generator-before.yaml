@@ -1,0 +1,35 @@
+---
+- name: Create .ssh/config file from YAML inventory
+  hosts: kube_lb
+  vars:
+    ssh_config_dir: /root/.ssh
+    ssh_config_path: "{{ ssh_config_dir }}/config"
+    # these variables will be set in .ssh/config file.
+    # they are not used to ssh into anywhere
+    ssh_user: ansible
+    ssh_port: 23389
+    ssh_identity_file: /root/.ansible/.ssh/id_ed25519
+
+  tasks:
+    - name: Create .ssh directory if it doesn't exist
+      file:
+        path: "{{ ssh_config_dir }}"
+        state: directory
+        mode: '0700'
+
+    - name: Create .ssh/config file
+      copy:
+        content: |
+          {% for host in groups['all'] %}
+          {% set hostvars = hostvars[host] %}
+          {% if 'ip' in hostvars %}
+          Host {{ host }}
+            HostName {{ hostvars.ip }}
+            User {{ ssh_user }}
+            Port {{ ssh_port }}
+            IdentityFile {{ ssh_identity_file }}
+          {% endif %}
+          {% endfor %}
+        dest: "{{ ssh_config_path }}"
+        mode: '0600'
+
