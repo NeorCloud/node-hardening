@@ -1,0 +1,16 @@
+---
+- name: Generate ed25519 SSH key pair if file does not exist
+  hosts: localhost
+
+  vars:
+    sshKeyPath: /root/.ansible/.ssh/id_ed25519
+
+  tasks:
+    - name: Check if SSH key file exists
+      stat:
+        path: "{{ sshKeyPath }}"
+      register: ssh_key_file
+
+    - name: Generate SSH key pair
+      command: ssh-keygen -t ed25519 -f "{{ sshKeyPath }}" -q -N ''
+      when: not ssh_key_file.stat.exists
