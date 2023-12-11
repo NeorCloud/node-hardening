@@ -22,13 +22,14 @@
         content: |
           {% for host in groups['all'] %}
           {% set hostvars = hostvars[host] %}
-          {% if 'ansible_host' in hostvars %}
+          {% if 'ip' in hostvars %}
           Host {{ host }}
-            HostName {{ hostvars.ansible_host }}
+            HostName {{ hostvars.ip }}
             User {{ ssh_user }}
             Port {{ ssh_port }}
             IdentityFile {{ ssh_identity_file }}
           {% endif %}
           {% endfor %}
         dest: "{{ ssh_config_path }}"
-        mode: '0644'
+        mode: '0600'
+
