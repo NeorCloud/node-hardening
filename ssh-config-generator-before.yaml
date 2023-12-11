@@ -3,7 +3,7 @@
   hosts: all
   vars:
     inventory_file_path: /root/bama-dcd-stage/inventory/hosts.yaml
-    ssh_config_dir: /tmp/.ssh
+    ssh_config_dir: /root/.ssh
     ssh_config_path: "{{ ssh_config_dir }}/config"
     ssh_user: ansible
     ssh_port: 23389
