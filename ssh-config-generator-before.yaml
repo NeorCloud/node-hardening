@@ -4,6 +4,8 @@
   vars:
     ssh_config_dir: /root/.ssh
     ssh_config_path: "{{ ssh_config_dir }}/config"
+    # these variables will be set in .ssh/config file.
+    # they are not used to ssh into anywhere
     ssh_user: ansible
     ssh_port: 23389
     ssh_identity_file: /root/.ansible/.ssh/id_ed25519
