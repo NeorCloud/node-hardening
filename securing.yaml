@@ -5,27 +5,27 @@
   tasks:
     - name: Extract SSH key directory
       set_fact:
-        sshKeyDir: "{{ sshKeyPath | dirname }}"
+        ssh_key_dir: "{{ ssh_key_path | dirname }}"
 
     - name: Check if SSH key directory exists
       stat:
-        path: "{{ sshKeyDir }}"
+        path: "{{ ssh_key_dir }}"
       register: ssh_key_dir
 
     - name: Create SSH key directory
       file:
-        path: "{{ sshKeyDir }}"
+        path: "{{ ssh_key_dir }}"
         state: directory
         mode: '0700'
       when: not ssh_key_dir.stat.exists
 
     - name: Check if SSH key file exists
       stat:
-        path: "{{ sshKeyPath }}"
+        path: "{{ ssh_key_path }}"
       register: ssh_key_file
 
     - name: Generate SSH key pair
-      command: ssh-keygen -t ed25519 -f "{{ sshKeyPath }}" -q -N ''
+      command: ssh-keygen -t ed25519 -f "{{ ssh_key_path }}" -q -N ''
       when: not ssh_key_file.stat.exists
 
 # Security hardening for Ubuntu 22.04 LTS playbook
@@ -50,7 +50,7 @@
   - name: Add ansible public key
     authorized_key:
       user: ansible
-      key: "{{ lookup('file', '{{ sshKeyPath }}.pub') }}"
+      key: "{{ lookup('file', '{{ ssh_key_path }}.pub') }}"
 
   - name: "Allow ansible user to sudo without a password"
     lineinfile:
@@ -63,7 +63,7 @@
   become: yes
   vars:
     ansible_user: ansible
-    ansible_ssh_private_key_file: "{{ sshKeyPath }}"
+    ansible_ssh_private_key_file: "{{ ssh_key_path }}"
   tasks:
   - name: Update apt cache
     ansible.builtin.apt:
@@ -80,7 +80,7 @@
   become: yes
   vars:
     ansible_user: ansible
-    ansible_ssh_private_key_file: "{{ sshKeyPath }}"
+    ansible_ssh_private_key_file: "{{ ssh_key_path }}"
   tasks:
   - name: Allow public key authentication
     lineinfile:
