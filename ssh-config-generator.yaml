@@ -2,14 +2,10 @@
 - name: Create .ssh/config file from YAML inventory
   hosts: kube_lb
   vars:
-    ssh_config_dir: /root/.ssh
-    ssh_config_path: "{{ ssh_config_dir }}/config"
-    # these variables will be set in .ssh/config file.
-    # they are not used to ssh into anywhere
-    ssh_user: ansible
-    ssh_port: 23389
-    ssh_identity_file: /root/.ansible/.ssh/id_ed25519
-
+    ssh_port: "{{ ssh_port_initial if current_state == 'initial' else ssh_port_desired }}"
+      # desired is 23389 | initial is 22
+    ssh_user: "{{ ssh_user_initial if current_state == 'initial' else ssh_user_desired }}"
+      # desired is ansible | initial is root
   tasks:
     - name: Create .ssh directory if it doesn't exist
       file:

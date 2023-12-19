@@ -1,9 +1,37 @@
+
+# create ansible-key
+- name: Generate ed25519 SSH key pair if directory and file do not exist
+  hosts: localhost
+  tasks:
+    - name: Extract SSH key directory
+      set_fact:
+        ssh_key_dir: "{{ ssh_key_path | dirname }}"
+
+    - name: Check if SSH key directory exists
+      stat:
+        path: "{{ ssh_key_dir }}"
+      register: ssh_key_dir
+
+    - name: Create SSH key directory
+      file:
+        path: "{{ ssh_key_dir }}"
+        state: directory
+        mode: '0700'
+      when: not ssh_key_dir.stat.exists
+
+    - name: Check if SSH key file exists
+      stat:
+        path: "{{ ssh_key_path }}"
+      register: ssh_key_file
+
+    - name: Generate SSH key pair
+      command: ssh-keygen -t ed25519 -f "{{ ssh_key_path }}" -q -N ''
+      when: not ssh_key_file.stat.exists
+
 # Security hardening for Ubuntu 22.04 LTS playbook
 - name: Add the ansible user
   hosts: all
   become: yes
-  vars:
-    sshKeyPath: "/root/.ansible/.ssh/id_ed25519"
   # Set sudo password from ansible-vault
   vars_prompt:
     - name: "ansible_become_pass"
@@ -22,7 +50,7 @@
   - name: Add ansible public key
     authorized_key:
       user: ansible
-      key: "{{ lookup('file', '{{ sshKeyPath }}.pub') }}"
+      key: "{{ lookup('file', '{{ ssh_key_path }}.pub') }}"
 
   - name: "Allow ansible user to sudo without a password"
     lineinfile:
@@ -30,13 +58,12 @@
       state: "present"
       insertafter: "^#includedir /etc/sudoers.d"
       line: "ansible  ALL=(ALL) NOPASSWD: ALL" 
-
 - name: Upgrade depenencies
   hosts: all
   become: yes
   vars:
     ansible_user: ansible
-    ansible_ssh_private_key_file: "{{ sshKeyPath }}"
+    ansible_ssh_private_key_file: "{{ ssh_key_path }}"
   tasks:
   - name: Update apt cache
     ansible.builtin.apt:
@@ -48,13 +75,12 @@
       upgrade: yes
       autoremove: yes
       autoclean: yes
-
 - name: Secure SSH access
   hosts: all
   become: yes
   vars:
     ansible_user: ansible
-    ansible_ssh_private_key_file: "{{ sshKeyPath }}"
+    ansible_ssh_private_key_file: "{{ ssh_key_path }}"
   tasks:
   - name: Allow public key authentication
     lineinfile:
@@ -115,7 +141,7 @@
     lineinfile:
       dest: /etc/ssh/sshd_config
       regexp: "^#Port 22"
-      line: "Port 23389"
+      line: "Port {{ ssh_port_desired }}"
       state: present
 
   - name: Limit idle time to 60 mins
