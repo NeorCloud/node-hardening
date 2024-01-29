@@ -1,6 +1,7 @@
 ---
 - name: Create .ssh/config file from YAML inventory
-  hosts: kube_lb
+  hosts: localhost
+  connection: local
   vars:
     ssh_port: "{{ ssh_port_initial if current_state == 'initial' else ssh_port_desired }}"
       # desired is 23389 | initial is 22
