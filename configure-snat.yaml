@@ -1,0 +1,64 @@
+---
+- name: Configure SNAT and persist iptables rules
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    snat_source_range: "{{ private_range }}"
+  tasks:
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        state: present
+        reload: yes
+
+    - name: Add SNAT rule using iptables
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        out_interface: "{{ ansible_default_ipv4['interface'] }}"
+        jump: MASQUERADE
+        source: "{{ snat_source_range }}"
+      register: snat_rule_result
+
+    - name: Create /etc/iptables/ directory
+      file:
+        path: /etc/iptables/
+        state: directory
+        mode: '0755'
+
+    - name: Check if iptables rules file exists
+      stat:
+        path: /etc/iptables/rules.v4
+      register: rules_file_stat
+
+    - name: Create a backup of iptables rules file
+      command: cp /etc/iptables/rules.v4 /etc/iptables/rules.v4.bak
+      changed_when: false
+      when: rules_file_stat.stat.exists
+
+    - name: Save iptables rules to file
+      command: iptables-save -f /etc/iptables/rules.v4
+
+    - name: Create iptables systemd service
+      copy:
+        dest: /etc/systemd/system/iptables.service
+        content: |
+          [Unit]
+          Description=iptables firewall
+
+          [Service]
+          ExecStart=/usr/sbin/iptables-restore /etc/iptables/rules.v4
+          ExecReload=/usr/sbin/iptables-restore /etc/iptables/rules.v4
+          Type=oneshot
+          RemainAfterExit=yes
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Reload iptables service
+      service:
+        name: iptables
+        state: reloaded
